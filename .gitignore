@@ -1,0 +1,55 @@
+# Byte-compiled files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Logs and debugging files
+*.log
+*.out
+*.err
+*.swp
+*.swo
+
+# Distribution / packaging
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+
+# Poetry-specific files
+poetry.lock
+.cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# System files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+
+# Test coverage reports
+htmlcov/
+.coverage
+.tox/
+.cache/
+.nox/
+pytest_cache/
+.coverage.*
+
+# Python project metadata
+*.spec
+
+# Custom
+.env
+.env.*
+*.pem
+*.key
