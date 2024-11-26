@@ -61,8 +61,6 @@ alias v='vim'
 alias t='tmux'
 alias k='kubectl'
 
-# My help
-alias hlp ='echo Remove All File: rm -rf echo '
 EOF
 )
 
