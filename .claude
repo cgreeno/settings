@@ -133,17 +133,3 @@ When adding new tasks to the development plan, use this structured approach for 
 
 
 
-## Project Structure & Standards
-
-#### **Key Principles:**
-1. **Start with high-level purpose** - One sentence describing what the component does
-2. **Break into specific functions** - Each function should have a single responsibility
-3. **Define clear inputs/outputs** - Use proper type annotations
-4. **List required types** - All interfaces and types the component needs
-5. **Plan testing strategy** - Both unit and integration test approaches
-6. **Use consistent naming** - Function names should be verbs, types should be nouns
-7. **Follow language standards** - Always refer to `{language}-standards-examples.md` for syntax and patterns (e.g., `typescript-standards-examples.md`, `elixir-standards-examples.md`, etc.)
-8. **Keep it simple**: Code should be understandable by a junior engineer
-9. **Be pragmatic**: Don't over-engineer, solve the problem directly
-10. **No unnecessary complexity**: Parse JSON directly, avoid abstractions
-11.  **Real data in playground**: No mock data in playground tests
