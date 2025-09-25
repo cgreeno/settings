@@ -2,7 +2,7 @@
 
 
 ### Analyzer Structure
-@Project structure.md Examples
+@Project overview.md - Examples
 
 ### Test Structure
 Each analyzer has TWO types of tests:
