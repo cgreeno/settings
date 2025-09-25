@@ -1,0 +1,197 @@
+# Claude Code Instructions
+
+## Project Structure & Standards
+
+### Core Principles
+- **Keep it simple**: Code should be understandable by a junior engineer
+- **Be pragmatic**: Don't over-engineer, solve the problem directly
+- **No unnecessary complexity**: Parse JSON directly, avoid abstractions
+- **Real data in playground**: No mock data in playground tests
+
+
+### Analyzer Structure
+@Project structure.md Examples
+
+
+### Test Structure
+Each analyzer has TWO types of tests:
+
+#### 1. Unit/Business Logic Tests (`analyzers/tests/analyzer-name.test.ts`)
+- Test business functionality
+- Test helper methods
+- Test data parsing logic
+- Test edge cases
+- **MOCK DATA ALLOWED** for API calls only
+- Focus on testing logic, not external dependencies
+
+#### 2. Integration Tests (`playground/analyzer-name.test.ts`)
+- Test with real SBOM/Grype files
+- Make real API calls
+- **ABSOLUTELY NO MOCK DATA**
+- Test end-to-end functionality
+- Verify actual API responses
+- Real file reading, real network calls
+
+### Coding Standards
+
+**Follow the coding standards and examples defined in `{languange}-standards-examples.md`** example typescript-standards-examples.md
+
+
+
+### Testing Requirements
+
+#### Unit/Business Logic Tests (Mock data allowed)
+```typescript
+// analyzers/tests/license-analyzer.test.ts
+import { LicenseAnalyzer } from '../license-analyzer';
+
+// Mock fetch for unit tests
+global.fetch = jest.fn();
+
+describe('LicenseAnalyzer', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('should extract license from artifact', () => {
+    const artifact = { licenses: [{ value: 'MIT' }] };
+    const result = analyzer.extractLicense(artifact);
+    expect(result).toBe('MIT');
+  });
+
+  test('should fetch license from GitHub API', async () => {
+    (fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ license: { spdx_id: 'MIT' } })
+    });
+
+    const result = await analyzer.fetchLicenseFromGitHub('pkg:npm/axios@1.0.0');
+    expect(result).toBe('MIT');
+  });
+});
+```
+
+#### Integration Tests (NO mock data)
+```typescript
+// playground/license-analyzer.test.ts
+import { LicenseAnalyzer } from '../src/analyzers/license-analyzer';
+
+describe('LicenseAnalyzer Integration', () => {
+  test('should analyze real SBOM file', async () => {
+    const analyzer = new LicenseAnalyzer();
+    const result = await analyzer.analyze('../sbom.json');
+
+    expect(result.totalPackages).toBeGreaterThan(0);
+    expect(result.licenses).toBeDefined();
+
+    console.log(`Found ${result.totalPackages} packages`);
+    console.log(`Licenses: ${Object.keys(result.licenses)}`);
+  });
+
+  test('should make real API calls', async () => {
+    const analyzer = new LicenseAnalyzer();
+    // This makes actual HTTP requests - no mocking
+    const license = await analyzer.fetchLicenseFromGitHub('pkg:npm/lodash@4.17.21');
+    expect(typeof license === 'string' || license === null).toBe(true);
+  });
+});
+```
+
+### Key Rules
+1. **Follow typescript-standards-examples.md** for all coding patterns
+2. **Mock data allowed in analyzers/tests/** - for unit testing business logic
+3. **NO mock data in playground/** - real files, real API calls only
+4. **Parse JSON directly** - no fancy parsing libraries
+5. **Use fetch() for API calls** - following our TypeScript standards
+6. **Keep methods small and focused** - one responsibility each
+7. **Junior engineer readable** - clear variable names, simple logic
+8. **Test business logic with mocks** - unit tests with controlled data
+9. **Test integration without mocks** - playground tests with real world data
+10. **Handle errors gracefully** - don't crash on API failures
+11. **Use TypeScript properly** - interfaces for structure, follow our examples
+
+### Test Organization
+- **analyzers/tests/**: Unit tests with mocked dependencies for fast, reliable testing
+- **playground/**: Integration tests with real dependencies for end-to-end validation
+
+### Standards Reference
+All TypeScript code must follow the patterns and examples in `typescript-standards-examples.md`. This includes:
+- Async/await with proper error handling
+- Type-safe API calls
+- Discriminated unions for result types
+- Proper use of generics and utility types
+- Immutability with readonly where appropriate
+
+This structure ensures maintainability, testability, and simplicity while meeting all project requirements.
+
+## Project Documentation
+
+### 📚 Documentation Files
+Please review these documentation files before starting any work:
+
+- **[CLAUDE.md](./CLAUDE.md)** - This file - Project instructions and coding standards
+- **[development-plan.md](./development-plan.md)** - Project roadmap, current status, and completed features
+- **[typescript-standards-examples.md](./typescript-standards-examples.md)** - TypeScript coding patterns and examples
+
+### 📋 Development Plan Management
+
+**IMPORTANT**: You MUST update the development plan after completing each significant task or feature:
+
+1. **Review the development plan** at the start of each session by reading `development-plan.md`
+2. **Update progress markers** - Change `[ ]` to `[x]` for completed items
+3. **Update the Current Status section** with:
+   - New completed features
+   - Current metrics and results
+   - Any architectural changes
+4. **Add new tasks** to the appropriate phase as they are discovered
+5. **Update file structure** if new files are created or moved
+
+This ensures the development plan stays current and provides accurate project status for future sessions.
+
+### 🔧 How to Add Detailed Tasks to Development Plan
+
+When adding new tasks to the development plan, use this structured approach for maximum clarity:
+
+#### **Format Template:**
+```markdown
+- [ ] **Component Name** - Brief description (1-2 words) of what this component does
+  - [ ] `functionName(input: Type) -> OutputType` - What this function does
+  - [ ] `anotherFunction(input: Type) -> OutputType` - What this function does
+  - [ ] `helperFunction(input: Type) -> OutputType` - What this function does
+  - [ ] **Types needed:** `ComponentResult`, `InputType`, `ConfigType`
+  - [ ] **Tests:** Unit tests + Integration tests
+```
+
+#### **Generic Example (Language Agnostic):**
+```markdown
+- [ ] **Data Validator** - Validates input data against business rules
+  - [ ] `validateRequired(data: Object) -> ValidationResult` - Check required fields exist
+  - [ ] `validateTypes(data: Object, schema: Schema) -> ValidationResult` - Type validation
+  - [ ] `validateBusiness(data: Object, rules: Rules) -> ValidationResult` - Business rule checks
+  - [ ] `formatErrors(errors: ErrorList) -> FormattedOutput` - Format validation errors
+  - [ ] **Types needed:** `ValidationResult`, `Schema`, `Rules`, `ErrorList`
+  - [ ] **Tests:** Unit tests with mock data + Integration tests with real data
+```
+
+#### **Real Project Example (TypeScript):**
+```markdown
+- [ ] **Forked Library Analyzer** - Detects dependencies that are forked versions of originals
+  - [ ] `detectForks(sbom: SBOM) -> ForkResult[]` - Identify potential forks from SBOM data
+  - [ ] `fetchOriginalRepo(packageUrl: string) -> RepoInfo | null` - Find original repository
+  - [ ] `compareForkToOriginal(fork: RepoInfo, original: RepoInfo) -> ForkComparison` - Compare fork vs original
+  - [ ] `assessMaintenanceRisk(comparison: ForkComparison) -> RiskLevel` - Calculate maintenance risk
+  - [ ] `generateForkReport(results: ForkResult[]) -> ForkReport` - Create structured output
+  - [ ] **Types needed:** `ForkResult`, `RepoInfo`, `ForkComparison`, `RiskLevel`, `ForkReport`
+  - [ ] **Tests:** Unit tests with mocked APIs + Integration tests with real repositories
+```
+
+#### **Key Principles:**
+1. **Start with high-level purpose** - One sentence describing what the component does
+2. **Break into specific functions** - Each function should have a single responsibility
+3. **Define clear inputs/outputs** - Use proper type annotations
+4. **List required types** - All interfaces and types the component needs
+5. **Plan testing strategy** - Both unit and integration test approaches
+6. **Use consistent naming** - Function names should be verbs, types should be nouns
+7. **Follow language standards** - Always refer to `{language}-standards-examples.md` for syntax and patterns (e.g., `typescript-standards-examples.md`, `elixir-standards-examples.md`, etc.)
+
+This approach works for any programming language - just adjust the syntax following your project's `{language}-standards-examples.md` file
