@@ -164,3 +164,62 @@ async function getRepo(id: number): Promise<Repo> {
   return Repo.parse(data);
 }
 ```
+### Testing Requirements
+
+#### Unit/Business Logic Tests (Mock data allowed for API CALLS)
+```typescript
+// analyzers/tests/license-analyzer.test.ts
+import { LicenseAnalyzer } from '../license-analyzer';
+
+// Mock fetch for unit tests
+global.fetch = jest.fn();
+
+describe('LicenseAnalyzer', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('should extract license from artifact', () => {
+    const artifact = { licenses: [{ value: 'MIT' }] };
+    const result = analyzer.extractLicense(artifact);
+    expect(result).toBe('MIT');
+  });
+
+  test('should fetch license from GitHub API', async () => {
+    (fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ license: { spdx_id: 'MIT' } })
+    });
+
+    const result = await analyzer.fetchLicenseFromGitHub('pkg:npm/axios@1.0.0');
+    expect(result).toBe('MIT');
+  });
+});
+```
+
+#### Integration Tests (NO mock data)
+```typescript
+// playground/example-test.ts
+//NO MOCK DATA
+import { LicenseAnalyzer } from '../src/analyzers/license-analyzer';
+
+describe('LicenseAnalyzer Integration', () => {
+  test('should analyze real SBOM file', async () => {
+    const analyzer = new LicenseAnalyzer();
+    const result = await analyzer.analyze('../sbom.json');
+
+    expect(result.totalPackages).toBeGreaterThan(0);
+    expect(result.licenses).toBeDefined();
+
+    console.log(`Found ${result.totalPackages} packages`);
+    console.log(`Licenses: ${Object.keys(result.licenses)}`);
+  });
+
+  test('should make real API calls', async () => {
+    const analyzer = new LicenseAnalyzer();
+    // This makes actual HTTP requests - no mocking
+    const license = await analyzer.fetchLicenseFromGitHub('pkg:npm/lodash@4.17.21');
+    expect(typeof license === 'string' || license === null).toBe(true);
+  });
+});
+```
