@@ -32,57 +32,135 @@ Key requirements from our standards:
 
 ### Example Implementation
 
-```typescript
-// license-analyzer.ts
-export interface LicenseResult {
-  totalPackages: number;
-  licensedPackages: number;
-  unknownPackages: number;
-  licenses: Record<string, number>;
-  unknownList: string[];
-  recommendations: string[];
+## 1) Async `fetch` with typing + safe errors
+
+```ts
+// Return typed JSON with error handling
+async function getUser(id: string): Promise<{ id: string; name: string }> {
+  const res = await fetch(`/api/users/${id}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as { id: string; name: string };
+}
+```
+
+---
+
+## 2) Generics for reusable functions
+
+```ts
+// Generic identity function
+function wrap<T>(value: T): { readonly data: T } {
+  return { data: value };
+}
+```
+
+---
+
+## 3) Narrowing with `in`, `typeof`, `instanceof`
+
+```ts
+type Item = { id: string } | { slug: string };
+
+function getKey(x: Item): string {
+  return 'id' in x ? x.id : x.slug;
 }
 
-export class LicenseAnalyzer {
-  private readonly githubToken?: string;
+function isNumber(x: unknown): x is number {
+  return typeof x === 'number';
+}
 
-  constructor() {
-    this.githubToken = process.env.GITHUB_TOKEN;
+class AppError extends Error {}
+function isAppError(e: unknown): e is AppError {
+  return e instanceof AppError;
+}
+```
+
+---
+
+## 4) Discriminated unions
+
+```ts
+type Result = { kind: 'ok'; value: number } | { kind: 'err'; message: string };
+
+function handle(r: Result): string {
+  switch (r.kind) {
+    case 'ok': return `Value: ${r.value}`;
+    case 'err': return `Error: ${r.message}`;
   }
+}
+```
 
-  async analyze(sbomPath: string): Promise<LicenseResult> {
-    const sbom = JSON.parse(fs.readFileSync(sbomPath, 'utf8'));
-    const results = [];
+---
 
-    for (const artifact of sbom.artifacts) {
-      const license = this.extractLicense(artifact);
-      if (license) {
-        results.push({ name: artifact.name, version: artifact.version, license });
-      } else {
-        // Make API call for missing license
-        const apiLicense = await this.fetchLicenseFromAPI(artifact.purl);
-        results.push({
-          name: artifact.name,
-          version: artifact.version,
-          license: apiLicense || 'Unknown'
-        });
-      }
-    }
+## 5) Modules & imports
 
-    return this.createSummary(results);
+```ts
+// math.ts
+export function add(a: number, b: number): number { return a + b; }
+
+// app.ts
+import { add } from './math';
+console.log(add(2, 3));
+```
+---
+
+## 6) Immutability with `readonly`
+
+```ts
+interface User {
+  readonly id: string;
+  readonly tags: readonly string[];
+}
+```
+
+---
+
+## 7) Utility types
+
+```ts
+type User = { id: string; name: string; age: number };
+type UserPreview = Pick<User, 'id' | 'name'>;
+```
+
+---
+
+## 8) Error handling in promises
+
+```ts
+async function safe(): Promise<void> {
+  try {
+    await fetch('/bad-url');
+  } catch (e: unknown) {
+    console.error('Request failed', e);
   }
+}
+```
 
-  private async fetchLicenseFromAPI(purl: string): Promise<string | null> {
-    try {
-      const response = await fetch(`https://api.github.com/repos/owner/repo/license`);
-      if (!response.ok) return null;
+---
 
-      const data = await response.json() as { license: { spdx_id: string } };
-      return data.license.spdx_id;
-    } catch (error: unknown) {
-      console.error('API call failed', error);
-      return null;
-    }
-  }
+## 9) External API client (typed)
+
+```ts
+interface Repo { id: number; name: string; }
+
+async function getRepos(user: string): Promise<Repo[]> {
+  const res = await fetch(`https://api.github.com/users/${user}/repos`);
+  return (await res.json()) as Repo[];
+}
+```
+
+---
+
+## 10) `fetch` with zod validation
+
+```ts
+import { z } from 'zod';
+
+const Repo = z.object({ id: z.number(), name: z.string() });
+type Repo = z.infer<typeof Repo>;
+
+async function getRepo(id: number): Promise<Repo> {
+  const data = await fetch(`/api/repos/${id}`).then(r => r.json());
+  return Repo.parse(data);
 }
 ```
