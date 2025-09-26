@@ -1,4 +1,4 @@
-# Kafka at Fresha
+# Fresha Elixir Coding Standards
 
 ## Principles
 
